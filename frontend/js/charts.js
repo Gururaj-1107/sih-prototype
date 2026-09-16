@@ -187,3 +187,38 @@ function renderFeatureImportanceChart(topFeatures) {
 window.addEventListener('DOMContentLoaded', () => {
   window.renderBenchmarkCharts = renderBenchmarkCharts;
 });
+
+async function renderRiskTimeline() {
+  const canvas = document.getElementById('riskTimelineChart');
+  if (!canvas) return;
+  
+  try {
+    const resp = await authFetch('/analytics/timeline');
+    if (!resp || !resp.ok) return;
+    const data = await resp.json();
+    
+    if (window._riskTimelineChart) window._riskTimelineChart.destroy();
+    
+    window._riskTimelineChart = new Chart(canvas.getContext('2d'), {
+      type: 'line',
+      data: {
+        labels: data.hours || [],
+        datasets: [
+          { label: 'Complaints', data: data.complaints || [], borderColor: '#06b6d4', backgroundColor: 'rgba(6,182,212,0.1)', fill: true, tension: 0.4 },
+          { label: 'Predictions', data: data.predictions || [], borderColor: '#10b981', backgroundColor: 'rgba(16,185,129,0.1)', fill: true, tension: 0.4 },
+          { label: 'Alerts', data: data.alerts || [], borderColor: '#f43f5e', backgroundColor: 'rgba(244,63,94,0.1)', fill: true, tension: 0.4 },
+          { label: 'Decoy Events', data: data.decoy_interactions || [], borderColor: '#a78bfa', backgroundColor: 'rgba(167,139,250,0.1)', fill: true, tension: 0.4 }
+        ]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { labels: { color: '#9ca3af', font: { size: 11 } } } },
+        scales: {
+          x: { ticks: { color: '#6b7280', font: { size: 9 } }, grid: { color: '#1e293b' } },
+          y: { ticks: { color: '#6b7280', font: { size: 9 } }, grid: { color: '#1e293b' }, beginAtZero: true }
+        }
+      }
+    });
+  } catch(e) { console.error('Timeline chart error:', e); }
+}

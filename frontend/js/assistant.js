@@ -55,7 +55,7 @@ async function executeAssistantQuery(question) {
     loadingElem.remove();
 
     // 3. Render Formatted Bot Message
-    appendChatMessage('bot', data.answer);
+    appendChatMessage('bot', data.answer, data);
   } catch (err) {
     loadingElem.remove();
     appendChatMessage('bot', 'Error querying assistant engine. Please ensure the backend API is reachable.');
@@ -65,7 +65,7 @@ async function executeAssistantQuery(question) {
   }
 }
 
-function appendChatMessage(sender, text) {
+function appendChatMessage(sender, text, data = {}) {
   const chatWindow = document.getElementById('assistantChatWindow');
   if (!chatWindow) return;
 
@@ -90,6 +90,23 @@ function appendChatMessage(sender, text) {
       <div class="msg-avatar">AI</div>
       <div class="msg-bubble">${formattedHtml}</div>
     `;
+    
+    const bubble = msgDiv.querySelector('.msg-bubble');
+    // Render context entities
+    if (data.context_entities && data.context_entities.length > 0) {
+      const entityHtml = data.context_entities.map(e => 
+        `<span class="context-badge">${e.type}: ${e.id}</span>`
+      ).join(' ');
+      bubble.innerHTML += `<div style="margin-top:8px;">${entityHtml}</div>`;
+    }
+
+    // Render suggested actions
+    if (data.suggested_actions && data.suggested_actions.length > 0) {
+      const actionsHtml = data.suggested_actions.map(a => 
+        `<button class="action-chip" onclick="handleAssistantAction('${a.action}', ${JSON.stringify(a.params).replace(/"/g, '&quot;')})">${a.label}</button>`
+      ).join('');
+      bubble.innerHTML += `<div class="action-chips-bar">${actionsHtml}</div>`;
+    }
   }
 
   chatWindow.appendChild(msgDiv);
@@ -105,6 +122,14 @@ function escapeHtml(string) {
     "'": '&#39;'
   };
   return String(string).replace(/[&<>"']/g, s => entityMap[s]);
+}
+
+function handleAssistantAction(action, params) {
+  if (action === 'view_case') switchView('view-workbench');
+  else if (action === 'view_map') switchView('view-map');
+  else if (action === 'export_pdf') exportEvidencePDF();
+  else if (action === 'view_decoys') switchView('view-decoys');
+  else if (action === 'run_demo') triggerDemoScenario();
 }
 
 window.askAssistantPrompt = askAssistantPrompt;

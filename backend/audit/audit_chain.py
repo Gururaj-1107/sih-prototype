@@ -17,7 +17,7 @@ DO NOT call this "blockchain" — it is a hash chain, an honest prototype.
 import hashlib
 import json
 import uuid
-from datetime import datetime
+from datetime import datetime, timezone
 
 
 def _sha256(data: str) -> str:
@@ -51,7 +51,7 @@ def create_audit_record(db_session, event_type: str, event_data: dict,
     event_data_str = json.dumps(event_data, sort_keys=True, default=str)
     event_data_hash = _sha256(event_data_str)
 
-    timestamp = datetime.utcnow().isoformat()
+    timestamp = datetime.now(timezone.utc).isoformat()
 
     # current_hash ties together: previous state + this event + timestamp
     current_hash = _sha256(prev_hash + event_data_hash + timestamp)

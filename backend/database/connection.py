@@ -4,8 +4,7 @@ Uses SQLite for local prototype. Replace DB_URL to use PostgreSQL/PostGIS in pro
 """
 import os
 from sqlalchemy import create_engine
-from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import sessionmaker
+from sqlalchemy.orm import sessionmaker, declarative_base
 
 # SQLite path — relative to project root
 DB_PATH = os.path.join(os.path.dirname(__file__), "..", "..", "data", "cashout_forecast.db")

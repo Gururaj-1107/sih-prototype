@@ -137,6 +137,49 @@ class TransactionGraph:
                 node["complaints"] = existing
                 node["is_victim"] = True
 
+        # ── Add controlled decoy nodes (Honeypot simulation layer) ────────
+        from backend.database.models import Decoy, DecoyInteraction
+        decoys = db_session.query(Decoy).all()
+        for dec in decoys:
+            self.graph.add_node(
+                dec.decoy_id,
+                node_type="decoy",
+                decoy_type=dec.decoy_type,
+                city=dec.city,
+                status=dec.status,
+                synthetic_account_id=dec.synthetic_account_id,
+                activation_reason=dec.activation_reason,
+                monitoring_status=dec.monitoring_status,
+                risk_context=dec.risk_context,
+                interaction_count=dec.interaction_count or 0,
+                is_synthetic=True,
+                is_decoy=True,
+                risk_label="controlled_decoy",
+            )
+
+        # ── Add decoy interaction edges ──────────────────────────────────
+        decoy_interactions = db_session.query(DecoyInteraction)
+        if cutoff_str:
+            decoy_interactions = decoy_interactions.filter(DecoyInteraction.timestamp <= cutoff_str)
+        decoy_interactions = decoy_interactions.all()
+
+        for d_int in decoy_interactions:
+            if d_int.source_account_id not in self.graph:
+                continue
+            if d_int.decoy_id not in self.graph:
+                continue
+            self.graph.add_edge(
+                d_int.source_account_id,
+                d_int.decoy_id,
+                edge_type="decoy_simulation",
+                interaction_id=d_int.interaction_id,
+                amount=d_int.synthetic_amount,
+                timestamp=d_int.timestamp,
+                interaction_type=d_int.interaction_type,
+                hop_number=d_int.hop_number,
+                is_synthetic=True,
+            )
+
         self.built_at = datetime.utcnow().isoformat()
         print(f"  [Graph] Built: {self.graph.number_of_nodes()} nodes, "
               f"{self.graph.number_of_edges()} edges "
@@ -294,6 +337,13 @@ class TransactionGraph:
                 "is_victim": data.get("is_victim", False),
                 "latitude": data.get("latitude"),
                 "longitude": data.get("longitude"),
+                "is_decoy": data.get("is_decoy", False),
+                "decoy_type": data.get("decoy_type"),
+                "status": data.get("status"),
+                "synthetic_account_id": data.get("synthetic_account_id"),
+                "activation_reason": data.get("activation_reason"),
+                "interaction_count": data.get("interaction_count", 0),
+                "is_synthetic": data.get("is_synthetic", False),
             })
 
         edges = []
@@ -304,6 +354,9 @@ class TransactionGraph:
                 "edge_type": data.get("edge_type", "transfer"),
                 "amount": data.get("amount", 0),
                 "timestamp": data.get("timestamp", ""),
+                "interaction_id": data.get("interaction_id"),
+                "interaction_type": data.get("interaction_type"),
+                "is_synthetic": data.get("is_synthetic", False),
             })
 
         return {"nodes": nodes, "edges": edges}

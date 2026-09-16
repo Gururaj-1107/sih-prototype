@@ -8,7 +8,7 @@
   <!-- Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
 
   <!-- Leaflet GIS Map -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
@@ -20,8 +20,15 @@
   <!-- Chart.js -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
+  <!-- jsPDF for client-side PDF generation -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+
   <!-- Custom Stylesheet -->
-  <link rel="stylesheet" href="/static/css/style.css">
+  <link rel="stylesheet" href="/static/css/style.css?v=3">
+  
+  <!-- Environment Config -->
+  <script src="/static/js/config.js"></script>
 </head>
 <body>
   <div class="app-layout">
@@ -35,28 +42,41 @@
               <path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm0 10.99h7c-.53 4.12-3.28 7.79-7 8.94V12H5V6.3l7-3.11v8.8z"/>
             </svg>
           </div>
-          <div>
-            <div class="brand-super">MINISTRY OF HOME AFFAIRS • I4C • CIS</div>
+          <div class="brand-info">
+            <div class="brand-super">MHA • I4C CYBER COMMAND</div>
             <div class="brand-title">CASHOUT FORECAST <span class="tag-sih">SIH 2026</span></div>
           </div>
         </div>
       </div>
+      <button class="hamburger-btn" id="btnHamburger" onclick="toggleMobileSidebar()">
+        <span></span><span></span><span></span>
+      </button>
 
       <div class="header-center">
         <div class="status-chip">
           <span class="pulse-indicator"></span>
-          <span class="status-label">PREDICTION ENGINE:</span>
+          <span class="status-label">ENGINE:</span>
           <span class="status-value text-emerald" id="modelVerHeader">ONLINE (LightGBM)</span>
         </div>
         <div class="status-chip">
-          <span class="status-label">AUDIT LEDGER:</span>
+          <span class="status-dot dot-cyan"></span>
+          <span class="status-label">AUDIT:</span>
           <span class="status-value text-cyan" id="chainIntegrityHeader">SHA-256 VERIFIED</span>
+        </div>
+        <div class="status-chip">
+          <span class="status-dot dot-purple"></span>
+          <span class="status-label">DECOY:</span>
+          <span class="status-value text-purple" id="decoyStatusHeader">HONEYPOT ARMED</span>
         </div>
       </div>
 
       <div class="header-right">
+        <button class="notification-bell" id="btnNotifications" onclick="toggleNotificationPanel()" title="Live Alerts">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>
+          <span class="notification-badge" id="notifBadge" style="display:none">0</span>
+        </button>
         <!-- 1-Click Interactive Demo Button -->
-        <button id="btnRunDemo" class="btn-demo-trigger" onclick="triggerDemoScenario()">
+        <button id="btnRunDemo" class="btn-demo-trigger" onclick="triggerDemoScenario()" title="Trigger Automated Ahmedabad to Mumbai Interception Demo">
           <span class="demo-icon">⚡</span>
           <span>Ahmedabad → Mumbai Demo</span>
         </button>
@@ -77,6 +97,15 @@
         </div>
       </div>
     </header>
+
+    <div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleMobileSidebar()"></div>
+    <div class="notification-panel" id="notificationPanel">
+      <div class="panel-header" style="padding:16px; border-bottom: 1px solid #1e293b;">
+        <h3 style="margin:0; font-size:1rem;">Live Alerts & Events</h3>
+        <button class="btn-close-drawer" onclick="toggleNotificationPanel()">×</button>
+      </div>
+      <div id="notificationList" style="padding:8px; overflow-y:auto; max-height:calc(100vh - 60px);"></div>
+    </div>
 
     <!-- BODY CONTAINER WITH SIDEBAR & VIEWPORTS -->
     <div class="main-body">
@@ -123,6 +152,25 @@
             <span>Transaction Network</span>
           </button>
 
+          <button class="nav-item" data-view="view-decoys" onclick="switchView('view-decoys')">
+            <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+              <circle cx="12" cy="11" r="3"></circle>
+            </svg>
+            <span>Controlled Decoy Intel</span>
+            <span class="nav-badge badge-purple" id="badgeDecoysCount">0</span>
+          </button>
+
+          <button class="nav-item" data-view="view-syndicates" onclick="switchView('view-syndicates')">
+            <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polygon points="12 2 2 7 12 12 22 7 12 2"></polygon>
+              <polyline points="2 17 12 22 22 17"></polyline>
+              <polyline points="2 12 12 17 22 12"></polyline>
+            </svg>
+            <span>Syndicate Clusters</span>
+            <span class="nav-badge badge-rose" id="badgeSyndicatesCount">NCRP</span>
+          </button>
+
           <button class="nav-item" data-view="view-map" onclick="switchView('view-map')">
             <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"></polygon>
@@ -130,6 +178,34 @@
               <line x1="16" y1="6" x2="16" y2="22"></line>
             </svg>
             <span>GIS Geospatial Radar</span>
+          </button>
+
+          <button class="nav-item" data-view="view-comparison" onclick="switchView('view-comparison')">
+            <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="3" y="3" width="7" height="18"></rect>
+              <rect x="14" y="3" width="7" height="18"></rect>
+            </svg>
+            <span>Scenario Comparison</span>
+          </button>
+
+          <div class="nav-section-title">TACTICAL INTERVENTIONS</div>
+
+          <button class="nav-item" data-view="view-interceptions" onclick="switchView('view-interceptions')">
+            <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M12 2a8 8 0 0 0-8 8c0 5.25 8 12 8 12s8-6.75 8-12a8 8 0 0 0-8-8z"></path>
+              <circle cx="12" cy="10" r="3"></circle>
+            </svg>
+            <span>Police Dispatch & Jurisdictions</span>
+            <span class="nav-badge badge-emerald" id="badgeDispatchesCount">LIVE</span>
+          </button>
+
+          <button class="nav-item" data-view="view-freeze" onclick="switchView('view-freeze')">
+            <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+              <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+            </svg>
+            <span>1930 Cyber Freeze Ledger</span>
+            <span class="nav-badge badge-cyan" id="badgeFrozenCount">₹ LIEN</span>
           </button>
 
           <div class="nav-section-title">HUMAN-IN-THE-LOOP</div>
@@ -239,6 +315,19 @@
               </div>
               <div class="kpi-value text-emerald" id="kpiPredictions">0</div>
               <div class="kpi-meta">Ranked candidate locations with windows</div>
+            </div>
+          </div>
+
+          <!-- Risk Timeline Chart -->
+          <div class="dashboard-panel mb-4">
+            <div class="panel-header">
+              <h3 class="panel-title">24-Hour Threat Intelligence Timeline</h3>
+              <span class="badge badge-cyan">LIVE ANALYTICS</span>
+            </div>
+            <div class="panel-body">
+              <div class="timeline-chart-wrapper">
+                <canvas id="riskTimelineChart" height="80"></canvas>
+              </div>
             </div>
           </div>
 
@@ -396,6 +485,117 @@
           </div>
         </section>
 
+        <!-- 4B. CONTROLLED DECOY INTELLIGENCE VIEW -->
+        <section id="view-decoys" class="content-view">
+          <div class="view-header">
+            <div>
+              <h1 class="view-title">Controlled Decoy Intelligence & Honeypots</h1>
+              <p class="view-subtitle">Proactive synthetic telemetry capturing adversary dispersal routing and layering vectors prior to cash-out</p>
+            </div>
+            <div class="view-actions">
+              <button class="btn btn-secondary" onclick="loadDecoysData()">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 4v6h-6"></path><path d="M1 20v-6h6"></path><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path></svg>
+                Refresh Telemetry
+              </button>
+            </div>
+          </div>
+
+          <!-- Ethical / Safe Simulation Disclaimer Banner -->
+          <div class="safety-banner-box mb-4">
+            <div class="safety-icon">🛡️</div>
+            <div class="safety-content">
+              <div class="safety-title">CONTROLLED FINANCIAL HONEYPOT SIMULATION — RESEARCH & DEMONSTRATION ONLY</div>
+              <div class="safety-text">This feature simulates controlled financial honeypots using synthetic transaction data for cybercrime intelligence research and demonstration. Never interacts with real banking infrastructure, customer accounts, or actual funds.</div>
+            </div>
+          </div>
+
+          <!-- Decoy KPI Grid -->
+          <div class="kpi-grid mb-4">
+            <div class="kpi-card info-glow">
+              <div class="kpi-header">
+                <span class="kpi-title">TOTAL CONTROLLED DECOYS</span>
+                <span class="kpi-icon text-cyan">🪤</span>
+              </div>
+              <div class="kpi-value text-cyan" id="kpiDecoysTotal">0</div>
+              <div class="kpi-meta">Synthetic honeypot endpoints</div>
+            </div>
+
+            <div class="kpi-card warning-glow">
+              <div class="kpi-header">
+                <span class="kpi-title">ARMED HONEYPOTS</span>
+                <span class="kpi-icon text-amber">🟡</span>
+              </div>
+              <div class="kpi-value text-amber" id="kpiDecoysArmed">0</div>
+              <div class="kpi-meta">Active listening on dispersal nodes</div>
+            </div>
+
+            <div class="kpi-card danger-glow">
+              <div class="kpi-header">
+                <span class="kpi-title">TELEMETRY INTERCEPTIONS</span>
+                <span class="kpi-icon text-rose">🔴</span>
+              </div>
+              <div class="kpi-value text-rose" id="kpiDecoysInteractions">0</div>
+              <div class="kpi-meta">Simulated adversary hits captured</div>
+            </div>
+
+            <div class="kpi-card success-glow">
+              <div class="kpi-header">
+                <span class="kpi-title">AUXILIARY INTEL SCORE</span>
+                <span class="kpi-icon text-emerald">⚡</span>
+              </div>
+              <div class="kpi-value text-emerald" id="kpiDecoysScore">0.94</div>
+              <div class="kpi-meta">Reinforced cash-out priority</div>
+            </div>
+          </div>
+
+          <!-- Decoy Split Grid: Active Cards + Live Telemetry Table -->
+          <div class="split-grid-2">
+            
+            <!-- Left: Active Decoys Cards -->
+            <div class="dashboard-panel">
+              <div class="panel-header">
+                <h3 class="panel-title">Active Synthetic Decoy Nodes</h3>
+                <span class="badge badge-purple">SYNTHETIC / CONTROLLED</span>
+              </div>
+              <div class="panel-body">
+                <div id="decoyCardsGrid" class="decoy-cards-list">
+                  <p class="text-muted text-sm">Loading controlled honeypots...</p>
+                </div>
+              </div>
+            </div>
+
+            <!-- Right: Recent Simulated Interactions -->
+            <div class="dashboard-panel">
+              <div class="panel-header">
+                <h3 class="panel-title">Captured Decoy Telemetry Events</h3>
+                <span class="badge badge-cyan">REAL-TIME SIGNALS</span>
+              </div>
+              <div class="panel-body p-0">
+                <div class="table-responsive" style="max-height: 480px; overflow-y: auto;">
+                  <table class="data-table">
+                    <thead>
+                      <tr>
+                        <th>Timestamp</th>
+                        <th>Source Mule</th>
+                        <th>Decoy Node</th>
+                        <th>Simulated Amount</th>
+                        <th>Origin → Dest</th>
+                        <th>Channel</th>
+                      </tr>
+                    </thead>
+                    <tbody id="decoyInteractionsTableBody">
+                      <tr>
+                        <td colspan="6" class="text-center text-muted">No simulated telemetry recorded yet.</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </section>
+
         <!-- 5. GIS GEOSPATIAL RADAR VIEW -->
         <section id="view-map" class="content-view">
           <div class="view-header">
@@ -441,6 +641,12 @@
               <select id="casePredictionSelector" class="form-select" onchange="loadCaseDetails(this.value)">
                 <option value="">Select Case to Review...</option>
               </select>
+              <button class="btn-export btn-export-pdf" onclick="exportEvidencePDF()" style="margin-left:8px;">
+                📄 Export Evidence PDF
+              </button>
+              <button class="btn-export btn-export-csv" onclick="exportCSV('predictions')" style="margin-left:4px;">
+                📊 Export CSV
+              </button>
             </div>
           </div>
 
@@ -639,6 +845,209 @@
               </div>
               <div class="panel-body">
                 <canvas id="featureImportanceChart" height="120"></canvas>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- 11. SCENARIO COMPARISON VIEW -->
+        <section id="view-comparison" class="content-view">
+          <div class="view-header">
+            <div>
+              <h1 class="view-title">Multi-Scenario Comparison & Batch Analysis</h1>
+              <p class="view-subtitle">Side-by-side analysis of active cybercrime case scenarios with aggregated threat metrics</p>
+            </div>
+            <div class="view-actions">
+              <button class="btn btn-secondary" onclick="loadComparisonData()">Refresh Comparison</button>
+            </div>
+          </div>
+          <div id="comparisonContent" class="comparison-grid">
+            <div class="empty-state">
+              <div class="empty-icon">📊</div>
+              <h3 class="empty-title">No Scenarios Loaded</h3>
+              <p>Run the demo scenario or load prediction data to see comparison analysis.</p>
+              <button class="btn btn-primary empty-cta" onclick="triggerDemoScenario()">⚡ Run Demo First</button>
+            </div>
+          </div>
+        </section>
+
+        <!-- 12. SYNDICATE CLUSTERS VIEW -->
+        <section id="view-syndicates" class="content-view">
+          <div class="view-header">
+            <div>
+              <h1 class="view-title">Cybercrime Syndicate Clusters (NCRP Ingestion)</h1>
+              <p class="view-subtitle">Graph community detection grouping isolated citizen complaints into organized multi-city syndicate operations</p>
+            </div>
+            <div class="view-actions">
+              <button class="btn btn-primary" onclick="bulkIngestDemoNCRP()">
+                <span>📥 Ingest 50 NCRP Complaints</span>
+              </button>
+              <button class="btn btn-secondary" onclick="loadSyndicateClusters()">
+                <span>🔄 Refresh Syndicates</span>
+              </button>
+            </div>
+          </div>
+
+          <div class="kpi-grid mb-4">
+            <div class="kpi-card danger-glow">
+              <div class="kpi-header"><span class="kpi-title">DETECTED SYNDICATES</span><span class="kpi-icon text-rose">🕸️</span></div>
+              <div class="kpi-value text-rose" id="kpiSyndicatesCount">0</div>
+              <div class="kpi-meta">Active organized money networks</div>
+            </div>
+            <div class="kpi-card warning-glow">
+              <div class="kpi-header"><span class="kpi-title">ESTIMATED ILLICIT VOLUME</span><span class="kpi-icon text-amber">💰</span></div>
+              <div class="kpi-value text-amber" id="kpiSyndicatesVolume">₹0</div>
+              <div class="kpi-meta">Aggregated complaint fund flow</div>
+            </div>
+            <div class="kpi-card info-glow">
+              <div class="kpi-header"><span class="kpi-title">INTER-STATE CORRIDORS</span><span class="kpi-icon text-cyan">🛣️</span></div>
+              <div class="kpi-value text-cyan" id="kpiCorridorsCount">Ahmedabad → Mumbai</div>
+              <div class="kpi-meta">Primary cross-border layering paths</div>
+            </div>
+          </div>
+
+          <div id="syndicatesCardsGrid" class="split-grid-2">
+            <!-- Populated via JS -->
+          </div>
+        </section>
+
+        <!-- 13. POLICE DISPATCH & JURISDICTIONS VIEW -->
+        <section id="view-interceptions" class="content-view">
+          <div class="view-header">
+            <div>
+              <h1 class="view-title">Police Dispatch & Law Enforcement Jurisdictions</h1>
+              <p class="view-subtitle">Automated advisory routing to local Cyber Police Stations with cryptographic patrol verification tokens</p>
+            </div>
+            <div class="view-actions">
+              <button class="btn btn-primary" onclick="openDispatchModal()">
+                <span>🚨 Issue Tactical Dispatch</span>
+              </button>
+              <button class="btn btn-secondary" onclick="loadInterceptionsData()">
+                <span>Refresh Status</span>
+              </button>
+            </div>
+          </div>
+
+          <div class="split-grid-2">
+            <!-- Left: Active Tactical Dispatches -->
+            <div class="dashboard-panel">
+              <div class="panel-header">
+                <h3 class="panel-title">Active Field Interception Advisories</h3>
+                <span class="badge badge-rose">LIVE POLICE PATROL</span>
+              </div>
+              <div class="panel-body p-0">
+                <div class="table-responsive">
+                  <table class="data-table">
+                    <thead>
+                      <tr>
+                        <th>Dispatch ID</th>
+                        <th>Target City / ATM</th>
+                        <th>Police Station</th>
+                        <th>Status</th>
+                        <th>Verification Token</th>
+                        <th>Action</th>
+                      </tr>
+                    </thead>
+                    <tbody id="dispatchesTableBody">
+                      <tr><td colspan="6" class="text-center py-4">Loading active police dispatches...</td></tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+
+            <!-- Right: Jurisdictional Cyber Police Stations Directory -->
+            <div class="dashboard-panel">
+              <div class="panel-header">
+                <h3 class="panel-title">Metropolitan Cyber Police Stations Directory</h3>
+                <span class="badge badge-cyan">LAW ENFORCEMENT NODES</span>
+              </div>
+              <div class="panel-body p-0">
+                <div class="table-responsive">
+                  <table class="data-table">
+                    <thead>
+                      <tr>
+                        <th>Station Name</th>
+                        <th>City</th>
+                        <th>Nodal Officer</th>
+                        <th>Contact Phone</th>
+                        <th>Coverage Radius</th>
+                      </tr>
+                    </thead>
+                    <tbody id="policeStationsTableBody">
+                      <tr><td colspan="5" class="text-center py-4">Loading police stations directory...</td></tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- 14. 1930 CYBER FREEZE & LIEN LEDGER VIEW -->
+        <section id="view-freeze" class="content-view">
+          <div class="view-header">
+            <div>
+              <h1 class="view-title">1930 Emergency Cyber Freeze & Banking Lien Ledger</h1>
+              <p class="view-subtitle">Instantaneous fund immobilization under Section 102 CrPC / Section 107 BNSS across NPCI, UPI & Core Banking</p>
+            </div>
+            <div class="view-actions">
+              <button class="btn btn-secondary" onclick="loadFrozenAccounts()">
+                <span>🔄 Refresh Freeze Ledger</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Freeze Banner -->
+          <div class="safety-banner-box mb-4" style="border-color: rgba(6, 182, 212, 0.4); background: rgba(6, 182, 212, 0.05);">
+            <div class="safety-icon">🔒</div>
+            <div class="safety-content">
+              <div class="safety-title" style="color: var(--accent-teal);">I4C / 1930 EMERGENCY FINANCIAL IMMOBILIZATION PROTOCOL</div>
+              <div class="safety-text">Automated digital lien marking simulates direct NPCI switch & core banking instruction to prevent cash withdrawal before mule accounts can be liquidated at ATM endpoints.</div>
+            </div>
+          </div>
+
+          <div class="kpi-grid mb-4">
+            <div class="kpi-card success-glow">
+              <div class="kpi-header"><span class="kpi-title">TOTAL FUNDS SECURED</span><span class="kpi-icon text-emerald">🛡️</span></div>
+              <div class="kpi-value text-emerald" id="kpiTotalSecuredFunds">₹0</div>
+              <div class="kpi-meta">Saved from cash extraction</div>
+            </div>
+            <div class="kpi-card warning-glow">
+              <div class="kpi-header"><span class="kpi-title">FROZEN MULE ACCOUNTS</span><span class="kpi-icon text-amber">🔒</span></div>
+              <div class="kpi-value text-amber" id="kpiFrozenAccountsCount">0</div>
+              <div class="kpi-meta">Active banking liens placed</div>
+            </div>
+            <div class="kpi-card info-glow">
+              <div class="kpi-header"><span class="kpi-title">LEGAL ADMISSIBILITY</span><span class="kpi-icon text-cyan">📜</span></div>
+              <div class="kpi-value text-cyan" style="font-size: 1.1rem; padding-top: 6px;">BNSS 107 / CrPC 102</div>
+              <div class="kpi-meta">Cryptographically sealed records</div>
+            </div>
+          </div>
+
+          <div class="dashboard-panel">
+            <div class="panel-header">
+              <h3 class="panel-title">Lien-Marked Accounts Ledger</h3>
+              <span class="badge badge-emerald">ACTIVE LIEN RECORDS</span>
+            </div>
+            <div class="panel-body p-0">
+              <div class="table-responsive">
+                <table class="data-table">
+                  <thead>
+                    <tr>
+                      <th>Account ID</th>
+                      <th>City / Branch</th>
+                      <th>Mule Risk Score</th>
+                      <th>Amount Secured (₹)</th>
+                      <th>Lien Timestamp</th>
+                      <th>Legal Basis</th>
+                      <th>Action</th>
+                    </tr>
+                  </thead>
+                  <tbody id="frozenAccountsTableBody">
+                    <tr><td colspan="7" class="text-center py-4">No accounts currently frozen.</td></tr>
+                  </tbody>
+                </table>
               </div>
             </div>
           </div>

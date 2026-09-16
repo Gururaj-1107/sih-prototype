@@ -3,11 +3,13 @@ Integration tests for FastAPI endpoints.
 """
 import pytest
 from fastapi.testclient import TestClient
+from backend.database.connection import init_db
 from backend.main import app, _seed_default_users
 
 
 @pytest.fixture(scope="module")
 def client():
+    init_db()
     _seed_default_users()
     with TestClient(app) as c:
         yield c
@@ -45,6 +47,7 @@ def test_predictions_and_evidence(client):
     login_resp = client.post("/auth/login", json={"username": "investigator", "password": "inv123"})
     token = login_resp.json()["access_token"]
 
+    client.post("/demo/run", headers={"Authorization": f"Bearer {token}"})
     preds = client.get("/predictions", headers={"Authorization": f"Bearer {token}"}).json()
     assert len(preds) > 0
     first_pred_id = preds[0]["prediction_id"]

@@ -1,0 +1,20 @@
+# Render Infrastructure Blueprint
+# CashOut Forecast API (SIH 2026 Problem Statement 26184)
+
+services:
+  - type: web
+    name: cashout-forecast-api
+    env: python
+    region: singapore # or frankfurt/oregon
+    plan: free
+    buildCommand: "pip install -r requirements.txt && python -c 'from backend.database.connection import init_db; init_db()'"
+    startCommand: "uvicorn backend.main:app --host 0.0.0.0 --port $PORT"
+    healthCheckPath: /overview
+    autoDeploy: true
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.9
+      - key: ENVIRONMENT
+        value: production
+      - key: ALLOWED_ORIGINS
+        value: "*"

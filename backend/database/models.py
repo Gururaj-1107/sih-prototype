@@ -48,6 +48,10 @@ class Account(Base):
     location_id = Column(String, ForeignKey("locations.location_id"))
     risk_label = Column(String, default="unknown")   # "mule", "victim", "clean", "suspect"
     mule_risk_score = Column(Float, default=0.0)     # 0–1 score from ML
+    is_frozen = Column(Boolean, default=False)       # 1930 / I4C Emergency Freeze
+    frozen_at = Column(String, nullable=True)        # ISO timestamp of lien
+    freeze_reason = Column(String, nullable=True)    # Legal basis e.g. "Section 102 CrPC / BNSS 107"
+    frozen_amount = Column(Float, default=0.0)       # Amount secured
     created_at = Column(String)
 
     location = relationship("Location")
@@ -195,3 +199,85 @@ class AuditLog(Base):
     event_data_hash = Column(String)  # SHA-256 of event_data
     previous_hash = Column(String)    # hash of previous audit record (or "GENESIS")
     current_hash = Column(String)     # SHA-256 of (previous_hash + event_data_hash + timestamp)
+
+
+class Decoy(Base):
+    """
+    Controlled Financial Decoy / Honeypot Node.
+    Purely synthetic / simulated entity used for cybercrime intelligence research and early interception.
+    """
+    __tablename__ = "decoys"
+
+    decoy_id = Column(String, primary_key=True)               # e.g. "D-001"
+    decoy_type = Column(String, nullable=False)              # "CONTROLLED_ACCOUNT", "CONTROLLED_WALLET", "CONTROLLED_MERCHANT", "CONTROLLED_ATM_ENDPOINT"
+    synthetic_account_id = Column(String, unique=True)       # e.g. "SYN_DEC_8801"
+    city = Column(String, nullable=False)
+    status = Column(String, default="INACTIVE")              # "INACTIVE", "ARMED", "INTERACTION_DETECTED"
+    activation_reason = Column(String)                       # e.g. "High Mule Risk (0.94) & Dispersal Splitter"
+    monitoring_status = Column(String, default="ACTIVE")     # "ACTIVE", "PAUSED", "COMPLETED"
+    risk_context = Column(String)                            # e.g. "Ahmedabad -> Mumbai Layering"
+    interaction_count = Column(Integer, default=0)
+    scenario_id = Column(String, nullable=True)
+    case_id = Column(String, nullable=True)
+    created_at = Column(String)
+    is_synthetic = Column(Boolean, default=True)
+
+    interactions = relationship("DecoyInteraction", back_populates="decoy", cascade="all, delete-orphan")
+
+
+class DecoyInteraction(Base):
+    """
+    Simulated telemetry event recording an interaction with a controlled decoy node.
+    Completely isolated from real financial systems.
+    """
+    __tablename__ = "decoy_interactions"
+
+    interaction_id = Column(String, primary_key=True)
+    decoy_id = Column(String, ForeignKey("decoys.decoy_id"), nullable=False)
+    source_account_id = Column(String, nullable=False)       # suspicious mule account
+    synthetic_amount = Column(Float, default=0.0)
+    timestamp = Column(String, nullable=False)
+    originating_city = Column(String)
+    destination_city = Column(String)
+    hop_number = Column(Integer, default=1)
+    interaction_type = Column(String)                        # "IMPS_PROBE", "DISPERSAL_ROUTING", "WALLET_ATTEMPT", "ATM_QUERY"
+    activation_reason = Column(String)
+    scenario_id = Column(String, nullable=True)
+    case_id = Column(String, nullable=True)
+    is_synthetic = Column(Boolean, default=True)
+
+    decoy = relationship("Decoy", back_populates="interactions")
+
+
+class PoliceStation(Base):
+    """Local Law Enforcement Jurisdiction Police Station."""
+    __tablename__ = "police_stations"
+
+    station_id = Column(String, primary_key=True)       # e.g. "PS-MUM-BKC-01"
+    name = Column(String, nullable=False)              # e.g. "BKC Cyber Police Station"
+    city = Column(String, nullable=False)              # "Mumbai"
+    state = Column(String, nullable=False)             # "Maharashtra"
+    latitude = Column(Float, nullable=False)
+    longitude = Column(Float, nullable=False)
+    nodal_officer = Column(String)                     # "Inspector R. K. Sharma"
+    contact_phone = Column(String)                     # "+91-22-2650-4400"
+    control_room_email = Column(String)
+    jurisdiction_radius_km = Column(Float, default=7.5)
+
+
+class InterceptionDispatch(Base):
+    """Tactical interception advisory dispatched to local law enforcement."""
+    __tablename__ = "interception_dispatches"
+
+    dispatch_id = Column(String, primary_key=True)      # e.g. "DSP-2026-001"
+    prediction_id = Column(String, ForeignKey("predictions.prediction_id"))
+    location_id = Column(String, ForeignKey("locations.location_id"))
+    station_id = Column(String, ForeignKey("police_stations.station_id"))
+    dispatched_at = Column(String, nullable=False)
+    status = Column(String, default="DISPATCHED")       # "DISPATCHED", "EN_ROUTE", "PATROL_ACTIVE", "INTERCEPTED", "STAND_DOWN"
+    priority = Column(String, default="HIGH")           # "CRITICAL", "HIGH", "MEDIUM"
+    expected_window = Column(String)
+    officer_notes = Column(Text, nullable=True)
+    verification_token = Column(String)                 # SHA-256 token for patrol team verification
+    dispatched_by = Column(String, default="I4C_AUTOMATION")
+
