@@ -1,0 +1,23 @@
+{
+  "feature_columns": [
+    "mule_risk_score",
+    "graph_pass_through_ratio",
+    "graph_suspicious_neighbours",
+    "graph_complaint_neighbours",
+    "graph_unique_counterparties",
+    "txn_velocity_2h",
+    "txn_time_since_last_hours",
+    "txn_terminal_outflow",
+    "temp_time_since_complaint_hours",
+    "spatial_terminal_city_match",
+    "spatial_victim_city_match",
+    "spatial_accs_in_cand_city",
+    "spatial_cross_state",
+    "spatial_n_cities_in_chain",
+    "spatial_chain_length",
+    "cand_hist_wdrs_at_loc",
+    "cand_hist_wdrs_in_city",
+    "cand_terminal_txns_at_city",
+    "cand_outflow_ratio_to_city"
+  ]
+}

@@ -1,0 +1,661 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CashOut Forecast | I4C Cybercrime Interception & Intelligence</title>
+  
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <!-- Leaflet GIS Map -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+
+  <!-- Vis.js Network Graph -->
+  <script type="text/javascript" src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"></script>
+
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  <!-- Custom Stylesheet -->
+  <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+  <div class="app-layout">
+    
+    <!-- TOP GLOBAL HEADER -->
+    <header class="top-header">
+      <div class="header-left">
+        <div class="brand-badge">
+          <div class="brand-emblem">
+            <svg viewBox="0 0 24 24">
+              <path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm0 10.99h7c-.53 4.12-3.28 7.79-7 8.94V12H5V6.3l7-3.11v8.8z"/>
+            </svg>
+          </div>
+          <div>
+            <div class="brand-super">MINISTRY OF HOME AFFAIRS • I4C • CIS</div>
+            <div class="brand-title">CASHOUT FORECAST <span class="tag-sih">SIH 2026</span></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="header-center">
+        <div class="status-chip">
+          <span class="pulse-indicator"></span>
+          <span class="status-label">PREDICTION ENGINE:</span>
+          <span class="status-value text-emerald" id="modelVerHeader">ONLINE (LightGBM)</span>
+        </div>
+        <div class="status-chip">
+          <span class="status-label">AUDIT LEDGER:</span>
+          <span class="status-value text-cyan" id="chainIntegrityHeader">SHA-256 VERIFIED</span>
+        </div>
+      </div>
+
+      <div class="header-right">
+        <!-- 1-Click Interactive Demo Button -->
+        <button id="btnRunDemo" class="btn-demo-trigger" onclick="triggerDemoScenario()">
+          <span class="demo-icon">⚡</span>
+          <span>Ahmedabad → Mumbai Demo</span>
+        </button>
+
+        <div class="user-profile">
+          <div class="user-avatar" id="userAvatar">IN</div>
+          <div class="user-meta">
+            <div class="user-name" id="userDisplayName">Investigator</div>
+            <div class="user-role" id="userRoleBadge">OFFICER CLEARANCE</div>
+          </div>
+          <button class="btn-icon" title="Logout" onclick="handleLogout()">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+              <polyline points="16 17 21 12 16 7"></polyline>
+              <line x1="21" y1="12" x2="9" y2="12"></line>
+            </svg>
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <!-- BODY CONTAINER WITH SIDEBAR & VIEWPORTS -->
+    <div class="main-body">
+      
+      <!-- NAVIGATION SIDEBAR -->
+      <aside class="app-sidebar">
+        <nav class="sidebar-nav">
+          <div class="nav-section-title">INTELLIGENCE SUITE</div>
+          
+          <button class="nav-item active" data-view="view-overview" onclick="switchView('view-overview')">
+            <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="3" y="3" width="7" height="7"></rect>
+              <rect x="14" y="3" width="7" height="7"></rect>
+              <rect x="14" y="14" width="7" height="7"></rect>
+              <rect x="3" y="14" width="7" height="7"></rect>
+            </svg>
+            <span>Overview & Threat Grid</span>
+          </button>
+
+          <button class="nav-item" data-view="view-alerts" onclick="switchView('view-alerts')">
+            <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+              <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+            </svg>
+            <span>Prioritized Alerts</span>
+            <span class="nav-badge" id="badgeAlertsCount">0</span>
+          </button>
+
+          <button class="nav-item" data-view="view-predictions" onclick="switchView('view-predictions')">
+            <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>
+            </svg>
+            <span>Location Predictions</span>
+          </button>
+
+          <button class="nav-item" data-view="view-network" onclick="switchView('view-network')">
+            <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="18" cy="5" r="3"></circle>
+              <circle cx="6" cy="12" r="3"></circle>
+              <circle cx="18" cy="19" r="3"></circle>
+              <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line>
+              <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line>
+            </svg>
+            <span>Transaction Network</span>
+          </button>
+
+          <button class="nav-item" data-view="view-map" onclick="switchView('view-map')">
+            <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"></polygon>
+              <line x1="8" y1="2" x2="8" y2="18"></line>
+              <line x1="16" y1="6" x2="16" y2="22"></line>
+            </svg>
+            <span>GIS Geospatial Radar</span>
+          </button>
+
+          <div class="nav-section-title">HUMAN-IN-THE-LOOP</div>
+
+          <button class="nav-item" data-view="view-workbench" onclick="switchView('view-workbench')">
+            <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+              <polyline points="14 2 14 8 20 8"></polyline>
+              <line x1="16" y1="13" x2="8" y2="13"></line>
+              <line x1="16" y1="17" x2="8" y2="17"></line>
+            </svg>
+            <span>Case Review & Evidence</span>
+          </button>
+
+          <button class="nav-item" data-view="view-assistant" onclick="switchView('view-assistant')">
+            <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+            </svg>
+            <span>Investigator Assistant</span>
+          </button>
+
+          <button class="nav-item" data-view="view-feedback" onclick="switchView('view-feedback')">
+            <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M9 11l3 3L22 4"></path>
+              <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path>
+            </svg>
+            <span>Adjudication & Feedback</span>
+          </button>
+
+          <div class="nav-section-title">GOVERNANCE & AUDIT</div>
+
+          <button class="nav-item" data-view="view-audit" onclick="switchView('view-audit')">
+            <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+              <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+            </svg>
+            <span>SHA-256 Audit Chain</span>
+          </button>
+
+          <button class="nav-item" data-view="view-metrics" onclick="switchView('view-metrics')">
+            <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="18" y1="20" x2="18" y2="10"></line>
+              <line x1="12" y1="20" x2="12" y2="4"></line>
+              <line x1="6" y1="20" x2="6" y2="14"></line>
+            </svg>
+            <span>Model Evaluation & SHAP</span>
+          </button>
+        </nav>
+
+        <div class="sidebar-footer">
+          <div class="node-id">SYSTEM NODE: I4C-PROD-01</div>
+          <div class="security-level">CLEARANCE: RESTRICTED-LE</div>
+        </div>
+      </aside>
+
+      <!-- PRIMARY CONTENT WORKSPACE -->
+      <main class="app-content">
+        
+        <!-- 1. OVERVIEW VIEW -->
+        <section id="view-overview" class="content-view active">
+          <div class="view-header">
+            <div>
+              <h1 class="view-title">Command Overview & Threat Landscape</h1>
+              <p class="view-subtitle">Real-time spatiotemporal cybercrime complaint intelligence & cash-out forecast status</p>
+            </div>
+            <div class="view-actions">
+              <button class="btn btn-secondary" onclick="refreshAllData()">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 4v6h-6"></path><path d="M1 20v-6h6"></path><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path></svg>
+                Refresh Feeds
+              </button>
+            </div>
+          </div>
+
+          <!-- KPI Metric Cards -->
+          <div class="kpi-grid">
+            <div class="kpi-card danger-glow">
+              <div class="kpi-header">
+                <span class="kpi-title">ACTIVE INTERCEPTION ALERTS</span>
+                <span class="kpi-icon text-rose">🚨</span>
+              </div>
+              <div class="kpi-value text-rose" id="kpiActiveAlerts">0</div>
+              <div class="kpi-meta">High probability imminent cash-outs</div>
+            </div>
+
+            <div class="kpi-card info-glow">
+              <div class="kpi-header">
+                <span class="kpi-title">COMPLAINTS PROCESSED</span>
+                <span class="kpi-icon text-cyan">📋</span>
+              </div>
+              <div class="kpi-value text-cyan" id="kpiComplaints">0</div>
+              <div class="kpi-meta">NCRP citizen reports connected</div>
+            </div>
+
+            <div class="kpi-card warning-glow">
+              <div class="kpi-header">
+                <span class="kpi-title">SUSPICIOUS / MULE ACCOUNTS</span>
+                <span class="kpi-icon text-amber">⚠️</span>
+              </div>
+              <div class="kpi-value text-amber" id="kpiSuspiciousAccounts">0</div>
+              <div class="kpi-meta">Layering & pass-through indicators</div>
+            </div>
+
+            <div class="kpi-card success-glow">
+              <div class="kpi-header">
+                <span class="kpi-title">PREDICTIONS GENERATED</span>
+                <span class="kpi-icon text-emerald">🎯</span>
+              </div>
+              <div class="kpi-value text-emerald" id="kpiPredictions">0</div>
+              <div class="kpi-meta">Ranked candidate locations with windows</div>
+            </div>
+          </div>
+
+          <!-- Interactive Overview Split Grid -->
+          <div class="split-grid-2">
+            
+            <!-- Left: High Priority Interception Alerts -->
+            <div class="dashboard-panel">
+              <div class="panel-header">
+                <h3 class="panel-title">Priority Interception Queue</h3>
+                <span class="badge badge-rose" id="liveAlertsBadge">LIVE</span>
+              </div>
+              <div class="panel-body p-0">
+                <div class="table-responsive">
+                  <table class="data-table">
+                    <thead>
+                      <tr>
+                        <th>Target Location</th>
+                        <th>Risk Score</th>
+                        <th>Priority</th>
+                        <th>Forecast Window</th>
+                        <th>Action</th>
+                      </tr>
+                    </thead>
+                    <tbody id="overviewAlertsTableBody">
+                      <tr><td colspan="5" class="text-center py-4">Loading active alerts...</td></tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+
+            <!-- Right: Mini Geospatial Threat Radar -->
+            <div class="dashboard-panel">
+              <div class="panel-header">
+                <h3 class="panel-title">Geospatial Withdrawal Radar</h3>
+                <button class="btn btn-sm btn-outline" onclick="switchView('view-map')">Expand Full Radar →</button>
+              </div>
+              <div class="panel-body p-0">
+                <div id="miniMap" class="mini-map-container"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Bottom: Recent Predictions Leaderboard -->
+          <div class="dashboard-panel mt-4">
+            <div class="panel-header">
+              <h3 class="panel-title">Latest Cash-Out Forecasts (Top-K Ranked)</h3>
+              <button class="btn btn-sm btn-outline" onclick="switchView('view-predictions')">View All Predictions →</button>
+            </div>
+            <div class="panel-body p-0">
+              <div class="table-responsive">
+                <table class="data-table">
+                  <thead>
+                    <tr>
+                      <th>Scenario Tag</th>
+                      <th>Rank #1 Candidate</th>
+                      <th>Model Score</th>
+                      <th>Forecast Cash-Out Window</th>
+                      <th>Status</th>
+                      <th>Explainability</th>
+                    </tr>
+                  </thead>
+                  <tbody id="overviewPredictionsTableBody">
+                    <tr><td colspan="6" class="text-center py-4">Loading predictions...</td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- 2. ALERTS VIEW -->
+        <section id="view-alerts" class="content-view">
+          <div class="view-header">
+            <div>
+              <h1 class="view-title">Prioritized Interception Alerts</h1>
+              <p class="view-subtitle">Actionable alerts generated from high-confidence cash-out location predictions</p>
+            </div>
+            <div class="filter-group">
+              <button class="filter-chip active" onclick="filterAlerts('ALL')">All Alerts</button>
+              <button class="filter-chip" onclick="filterAlerts('HIGH')">High Priority</button>
+              <button class="filter-chip" onclick="filterAlerts('MEDIUM')">Medium</button>
+              <button class="filter-chip" onclick="filterAlerts('LOW')">Low</button>
+            </div>
+          </div>
+
+          <div class="alert-cards-grid" id="alertsCardsContainer">
+            <!-- Populated via JS -->
+          </div>
+        </section>
+
+        <!-- 3. PREDICTIONS VIEW -->
+        <section id="view-predictions" class="content-view">
+          <div class="view-header">
+            <div>
+              <h1 class="view-title">Cash-Out Location Forecasts</h1>
+              <p class="view-subtitle">Multi-candidate ranking for suspicious fund networks before physical ATM extraction occurs</p>
+            </div>
+          </div>
+
+          <div class="dashboard-panel">
+            <div class="panel-body p-0">
+              <div class="table-responsive">
+                <table class="data-table">
+                  <thead>
+                    <tr>
+                      <th>Prediction ID</th>
+                      <th>Generated At</th>
+                      <th>Scenario</th>
+                      <th>Top Candidate City</th>
+                      <th>Confidence Score</th>
+                      <th>Estimated Time Window</th>
+                      <th>Status</th>
+                      <th>Investigate</th>
+                    </tr>
+                  </thead>
+                  <tbody id="predictionsFullTableBody">
+                    <!-- Populated via JS -->
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- 4. TRANSACTION NETWORK VIEW -->
+        <section id="view-network" class="content-view">
+          <div class="view-header">
+            <div>
+              <h1 class="view-title">Transaction Flow & Mule Network Graph</h1>
+              <p class="view-subtitle">Multi-hop money trail analysis from victim accounts through intermediate mules to cash-out endpoints</p>
+            </div>
+            <div class="view-actions">
+              <span class="legend-chip"><span class="dot dot-victim"></span> Victim / Complaint</span>
+              <span class="legend-chip"><span class="dot dot-mule"></span> Suspected Mule</span>
+              <span class="legend-chip"><span class="dot dot-hub"></span> Pass-Through Hub</span>
+              <span class="legend-chip"><span class="dot dot-atm"></span> Target Cash-Out ATM</span>
+            </div>
+          </div>
+
+          <div class="network-workspace">
+            <div class="network-graph-container" id="networkGraphContainer"></div>
+            
+            <!-- Graph Node Details Drawer -->
+            <div class="network-detail-drawer" id="networkDetailDrawer">
+              <div class="drawer-header">
+                <h4 id="drawerNodeTitle">Select Node in Graph</h4>
+                <button class="btn-close-drawer" onclick="closeNetworkDrawer()">×</button>
+              </div>
+              <div class="drawer-body" id="drawerNodeContent">
+                <p class="text-muted">Click any account, transaction, or ATM node in the interactive graph to view risk indicators, fan-in/fan-out metrics, and connected complaints.</p>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- 5. GIS GEOSPATIAL RADAR VIEW -->
+        <section id="view-map" class="content-view">
+          <div class="view-header">
+            <div>
+              <h1 class="view-title">Geospatial Cash-Out Interception Radar</h1>
+              <p class="view-subtitle">National interactive map plotting complaint origins, mule account clusters, and forecast ATM cash-out hotspots</p>
+            </div>
+            <div class="view-actions">
+              <label class="map-layer-toggle">
+                <input type="checkbox" id="chkShowPolylines" checked onchange="toggleFlowPolylines()">
+                <span>Show Inter-City Fund Trajectories</span>
+              </label>
+              <label class="map-layer-toggle">
+                <input type="checkbox" id="chkShowAtms" checked onchange="toggleAtmMarkers()">
+                <span>ATM Candidate Clusters</span>
+              </label>
+            </div>
+          </div>
+
+          <div class="full-map-wrapper">
+            <div id="radarMap" class="radar-map-container"></div>
+            
+            <!-- Floating Map Legend & Stats Overlay -->
+            <div class="map-floating-panel">
+              <div class="panel-header p-2">
+                <h4 class="text-sm font-semibold">Active Interception Zones</h4>
+              </div>
+              <div class="p-3 text-xs" id="mapSummaryStats">
+                Loading geospatial coordinates...
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- 6. INVESTIGATOR WORKBENCH (CASE REVIEW) -->
+        <section id="view-workbench" class="content-view">
+          <div class="view-header">
+            <div>
+              <h1 class="view-title">Investigator Review & Evidence Workbench</h1>
+              <p class="view-subtitle">Deep-dive into prediction rationale, SHAP feature contributions, and adjudicate cash-out alerts</p>
+            </div>
+            <div class="view-actions">
+              <select id="casePredictionSelector" class="form-select" onchange="loadCaseDetails(this.value)">
+                <option value="">Select Case to Review...</option>
+              </select>
+            </div>
+          </div>
+
+          <div id="workbenchContentArea" class="workbench-layout">
+            <div class="empty-state-panel">
+              <div class="empty-icon">📂</div>
+              <h3>No Case Selected</h3>
+              <p>Select a prediction from the dropdown above or click "Investigate" from the Alerts or Predictions table.</p>
+            </div>
+          </div>
+        </section>
+
+        <!-- 7. INVESTIGATOR ASSISTANT VIEW -->
+        <section id="view-assistant" class="content-view">
+          <div class="view-header">
+            <div>
+              <h1 class="view-title">Investigator Intelligence Assistant</h1>
+              <p class="view-subtitle">Evidence-grounded conversational analyst answering queries from structured case data</p>
+            </div>
+          </div>
+
+          <div class="assistant-workspace">
+            <div class="assistant-chat-window" id="assistantChatWindow">
+              <div class="chat-message bot-message">
+                <div class="msg-avatar">AI</div>
+                <div class="msg-bubble">
+                  <p><strong>Greetings, Officer.</strong> I am the CashOut Forecast Intelligence Assistant. I am directly connected to the system database, feature engine, and audit ledger.</p>
+                  <p class="text-xs text-muted mt-2">All answers are strictly grounded in verified database records — no hallucination or speculative assumptions.</p>
+                </div>
+              </div>
+            </div>
+
+            <!-- Suggested Quick Queries -->
+            <div class="quick-prompts-bar">
+              <button class="prompt-chip" onclick="askAssistantPrompt('Why is Mumbai ranked first for the current case?')">Why is Mumbai ranked first?</button>
+              <button class="prompt-chip" onclick="askAssistantPrompt('Show transaction path from victim account')">Show transaction path</button>
+              <button class="prompt-chip" onclick="askAssistantPrompt('What active alerts require immediate dispatch?')">Active alerts summary</button>
+              <button class="prompt-chip" onclick="askAssistantPrompt('How many potential mule accounts are flagged?')">Mule accounts overview</button>
+              <button class="prompt-chip" onclick="askAssistantPrompt('Compare candidate locations for this scenario')">Compare locations</button>
+            </div>
+
+            <!-- Input Box -->
+            <form class="assistant-input-bar" onsubmit="sendAssistantMessage(event)">
+              <input type="text" id="assistantInput" placeholder="Ask a question about cases, accounts, predicted cities, or evidence..." autocomplete="off">
+              <button type="submit" class="btn btn-primary" id="btnSendAssistant">
+                <span>Send</span>
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
+              </button>
+            </form>
+          </div>
+        </section>
+
+        <!-- 8. FEEDBACK & HUMAN-IN-THE-LOOP VIEW -->
+        <section id="view-feedback" class="content-view">
+          <div class="view-header">
+            <div>
+              <h1 class="view-title">Adjudication & Human-in-the-Loop Audit</h1>
+              <p class="view-subtitle">Review investigator ground-truth feedback. Retraining is strictly controlled and requires human sign-off.</p>
+            </div>
+          </div>
+
+          <div class="dashboard-panel">
+            <div class="panel-header">
+              <h3 class="panel-title">Recorded Investigator Verdicts</h3>
+              <span class="badge badge-cyan">MODEL RETRAINING GOVERNANCE</span>
+            </div>
+            <div class="panel-body p-0">
+              <div class="table-responsive">
+                <table class="data-table">
+                  <thead>
+                    <tr>
+                      <th>Feedback ID</th>
+                      <th>Prediction ID</th>
+                      <th>Officer Verdict</th>
+                      <th>Verified Actual Location</th>
+                      <th>Investigator Notes</th>
+                      <th>Timestamp</th>
+                      <th>Approved for Retraining</th>
+                    </tr>
+                  </thead>
+                  <tbody id="feedbackTableBody">
+                    <!-- Populated via JS -->
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- 9. AUDIT CHAIN LEDGER VIEW -->
+        <section id="view-audit" class="content-view">
+          <div class="view-header">
+            <div>
+              <h1 class="view-title">Cryptographic SHA-256 Audit Ledger</h1>
+              <p class="view-subtitle">Tamper-evident hash-chain ensuring full evidential integrity and traceability for court admissibility</p>
+            </div>
+            <div class="view-actions">
+              <button class="btn btn-primary" id="btnVerifyChain" onclick="verifyAuditLedger()">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                Verify Cryptographic Integrity
+              </button>
+            </div>
+          </div>
+
+          <!-- Integrity Status Banner -->
+          <div id="auditIntegrityBanner" class="integrity-banner banner-valid">
+            <div class="banner-icon">🛡️</div>
+            <div>
+              <div class="banner-title" id="chainStatusTitle">HASH CHAIN STATUS: VALID & UNBROKEN</div>
+              <div class="banner-sub" id="chainStatusSub">All sequential SHA-256 blocks conform to mathematical tamper-evidence requirements.</div>
+            </div>
+          </div>
+
+          <div class="dashboard-panel mt-4">
+            <div class="panel-header">
+              <h3 class="panel-title">Sequential Audit Block Chain</h3>
+              <span class="text-xs text-muted" id="auditBlockCount">Showing recent blocks</span>
+            </div>
+            <div class="panel-body p-0">
+              <div class="table-responsive">
+                <table class="data-table font-mono text-xs">
+                  <thead>
+                    <tr>
+                      <th>Seq #</th>
+                      <th>Timestamp (UTC)</th>
+                      <th>Event Type</th>
+                      <th>Officer / Actor</th>
+                      <th>Payload Hash</th>
+                      <th>Previous Hash (SHA-256)</th>
+                      <th>Block Hash (SHA-256)</th>
+                      <th>Status</th>
+                    </tr>
+                  </thead>
+                  <tbody id="auditChainTableBody">
+                    <!-- Populated via JS -->
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- 10. MODEL EVALUATION & SHAP METRICS VIEW -->
+        <section id="view-metrics" class="content-view">
+          <div class="view-header">
+            <div>
+              <h1 class="view-title">Model Benchmarks & SHAP Feature Importance</h1>
+              <p class="view-subtitle">Validation metrics comparing LightGBM against baseline models on strictly chronological splits</p>
+            </div>
+          </div>
+
+          <div class="metrics-grid">
+            
+            <!-- Comparison Table Card -->
+            <div class="dashboard-panel">
+              <div class="panel-header">
+                <h3 class="panel-title">Model Performance Comparison (Test Split)</h3>
+                <span class="badge badge-emerald">ZERO TEMPORAL LEAKAGE</span>
+              </div>
+              <div class="panel-body p-0">
+                <div class="table-responsive">
+                  <table class="data-table">
+                    <thead>
+                      <tr>
+                        <th>Model Architecture</th>
+                        <th>Hit Rate@3</th>
+                        <th>Hit Rate@5</th>
+                        <th>Precision@3</th>
+                        <th>Avg Precision</th>
+                        <th>Status</th>
+                      </tr>
+                    </thead>
+                    <tbody id="modelComparisonTableBody">
+                      <!-- Populated via JS -->
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+
+            <!-- Chart: Comparison Bar Chart -->
+            <div class="dashboard-panel">
+              <div class="panel-header">
+                <h3 class="panel-title">Hit Rate@K & Precision Benchmark</h3>
+              </div>
+              <div class="panel-body">
+                <canvas id="modelBenchmarkChart" height="200"></canvas>
+              </div>
+            </div>
+
+            <!-- Chart: Feature Importance -->
+            <div class="dashboard-panel col-span-2">
+              <div class="panel-header">
+                <h3 class="panel-title">Top 10 Feature Importances (LightGBM)</h3>
+                <span class="text-xs text-muted">Feature contribution to cash-out location probability ranking</span>
+              </div>
+              <div class="panel-body">
+                <canvas id="featureImportanceChart" height="120"></canvas>
+              </div>
+            </div>
+          </div>
+        </section>
+
+      </main>
+    </div>
+  </div>
+
+  <!-- Toast Notification Container -->
+  <div id="toastContainer" class="toast-container"></div>
+
+  <!-- JavaScript Modules -->
+  <script src="/static/js/app.js"></script>
+  <script src="/static/js/map.js"></script>
+  <script src="/static/js/graph.js"></script>
+  <script src="/static/js/charts.js"></script>
+  <script src="/static/js/assistant.js"></script>
+</body>
+</html>

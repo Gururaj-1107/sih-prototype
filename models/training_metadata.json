@@ -1,0 +1,142 @@
+{
+  "model_version": "v20260916_114419",
+  "trained_at": "2026-09-16T11:44:19.854286",
+  "model_type": "LightGBM",
+  "n_train": 774,
+  "n_val": 158,
+  "n_test": 170,
+  "feature_columns": [
+    "mule_risk_score",
+    "graph_pass_through_ratio",
+    "graph_suspicious_neighbours",
+    "graph_complaint_neighbours",
+    "graph_unique_counterparties",
+    "txn_velocity_2h",
+    "txn_time_since_last_hours",
+    "txn_terminal_outflow",
+    "temp_time_since_complaint_hours",
+    "spatial_terminal_city_match",
+    "spatial_victim_city_match",
+    "spatial_accs_in_cand_city",
+    "spatial_cross_state",
+    "spatial_n_cities_in_chain",
+    "spatial_chain_length",
+    "cand_hist_wdrs_at_loc",
+    "cand_hist_wdrs_in_city",
+    "cand_terminal_txns_at_city",
+    "cand_outflow_ratio_to_city"
+  ],
+  "top_features": [
+    [
+      "cand_hist_wdrs_in_city",
+      26.0
+    ],
+    [
+      "spatial_accs_in_cand_city",
+      21.0
+    ],
+    [
+      "cand_hist_wdrs_at_loc",
+      19.0
+    ],
+    [
+      "spatial_terminal_city_match",
+      10.0
+    ],
+    [
+      "txn_time_since_last_hours",
+      9.0
+    ],
+    [
+      "txn_terminal_outflow",
+      8.0
+    ],
+    [
+      "cand_terminal_txns_at_city",
+      8.0
+    ],
+    [
+      "temp_time_since_complaint_hours",
+      7.0
+    ],
+    [
+      "txn_velocity_2h",
+      5.0
+    ],
+    [
+      "spatial_victim_city_match",
+      5.0
+    ]
+  ],
+  "metrics": {
+    "baseline1_historical_freq": {
+      "hit_rate@1": 0.0,
+      "precision@1": 0.0,
+      "hit_rate@3": 0.0,
+      "precision@3": 0.0,
+      "hit_rate@5": 0.8519,
+      "precision@5": 0.1704,
+      "city_hit_rate@1": 0.5185,
+      "city_hit_rate@3": 1.0,
+      "city_hit_rate@5": 1.0,
+      "average_precision": 0.1737
+    },
+    "baseline2_nearest_loc": {
+      "hit_rate@1": 0.0,
+      "precision@1": 0.0,
+      "hit_rate@3": 0.1852,
+      "precision@3": 0.0617,
+      "hit_rate@5": 0.7037,
+      "precision@5": 0.1407,
+      "city_hit_rate@1": 0.5556,
+      "city_hit_rate@3": 1.0,
+      "city_hit_rate@5": 1.0,
+      "average_precision": 0.2093
+    },
+    "baseline3_logistic_reg": {
+      "hit_rate@1": 0.2593,
+      "precision@1": 0.2593,
+      "hit_rate@3": 0.7407,
+      "precision@3": 0.2469,
+      "hit_rate@5": 1.0,
+      "precision@5": 0.2,
+      "city_hit_rate@1": 1.0,
+      "city_hit_rate@3": 1.0,
+      "city_hit_rate@5": 1.0,
+      "average_precision": 0.2496
+    },
+    "final_lgbm": {
+      "hit_rate@1": 0.1481,
+      "precision@1": 0.1481,
+      "hit_rate@3": 0.6667,
+      "precision@3": 0.2222,
+      "hit_rate@5": 1.0,
+      "precision@5": 0.2,
+      "city_hit_rate@1": 1.0,
+      "city_hit_rate@3": 1.0,
+      "city_hit_rate@5": 1.0,
+      "average_precision": 0.276
+    }
+  },
+  "feature_importances": {
+    "mule_risk_score": 4.0,
+    "graph_pass_through_ratio": 1.0,
+    "graph_suspicious_neighbours": 0.0,
+    "graph_complaint_neighbours": 0.0,
+    "graph_unique_counterparties": 0.0,
+    "txn_velocity_2h": 5.0,
+    "txn_time_since_last_hours": 9.0,
+    "txn_terminal_outflow": 8.0,
+    "temp_time_since_complaint_hours": 7.0,
+    "spatial_terminal_city_match": 10.0,
+    "spatial_victim_city_match": 5.0,
+    "spatial_accs_in_cand_city": 21.0,
+    "spatial_cross_state": 0.0,
+    "spatial_n_cities_in_chain": 5.0,
+    "spatial_chain_length": 4.0,
+    "cand_hist_wdrs_at_loc": 19.0,
+    "cand_hist_wdrs_in_city": 26.0,
+    "cand_terminal_txns_at_city": 8.0,
+    "cand_outflow_ratio_to_city": 0.0
+  }
+}
